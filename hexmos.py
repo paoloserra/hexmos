@@ -10,7 +10,7 @@ def create_parser():
                         "Default is 1 deg.")
     p.add_argument("-gs", "--grid-spacing", type=float, default=0.58,
                    help="Spacing of the hexagonal mosaic grid (deg). "
-                        "Default is 0.58 deg = default beam width / sqrt(3) -- Nyquist sampling.")
+                        "Default is 0.58 deg = 1 deg / sqrt(3) = Nyquist sampling for default beam.")
     return p
 
 def beam(X,Y,FWHM):
