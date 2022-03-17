@@ -36,7 +36,7 @@ gs = args.grid_spacing
 # Print settings
 
 print('#')
-print('# Will make a square mosaic with the following specs:')
+print('# Will make a mosaic with the following specs:')
 print('    - mosaic size = {0:1.2f} deg'.format(ms))
 print('      (size of the square region within which to distribute the pointings)')
 print('    - primary beam FWHM = {0:1.2f} deg'.format(bw))
