@@ -1,5 +1,8 @@
 # hexmos
-Interferometric mosaic planning tool
+Interferometric mosaic planning tool.
+
+
+It distributes Gaussian primary beams of a given FWHM (`-bw`) on a hexagonal mosaic grid of a given size (`-ms`) and spacing (`-gs`), and returns useful info on the resulting mosaic.
 
 ```
 usage: hexmos.py [-h] [-ms MOS_SIZE] [-bw BEAM_WIDTH] [-gs GRID_SPACING]
