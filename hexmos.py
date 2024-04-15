@@ -17,8 +17,12 @@ def create_parser():
     p.add_argument("-rot", "--rotate", type=float, default=0.0,
                    help="Rotate pointing pattern about the mosaic centre by this angle (north through east)."
                    " Default is 0 deg.")
-    p.add_argument("-pc", "--print-coords", action="store_true",
-                   help="Print coordinates of the pointings. Default is false.")
+    p.add_argument("-sc", "--save-coords", type=str,
+                   help="Save the coordinates of the pointings to an ASCII file. Give the file name here."
+                   " The default is to not save the coordinates to a file.")
+    p.add_argument("-skip", "--skip-pointings", type=int, nargs='+', required = False,
+                   help="Space separated list of pointings ID to be skipped when building the mosaic."
+                   " Default is to include all poitings.")
     return p
 
 def beam(X,Y,FWHM):
@@ -53,10 +57,13 @@ args = create_parser().parse_args([a for a in sys.argv[1:]])
 ms = list(map(float,args.mos_size.split(',')))
 bw = args.beam_width
 gs = args.grid_spacing
-pc = args.print_coords
+sc = args.save_coords
 rot = args.rotate
+skip = args.skip_pointings
 mos_cen_ra = args.right_ascension
 mos_cen_dec = decsign+args.declination
+if not skip:
+    skip = []
 
 
 # Print settings
@@ -144,18 +151,24 @@ points = np.concatenate((
 
 # Add beams to sky image
 mos_cen = SkyCoord('{0:s} {1:s}'.format(mos_cen_ra,mos_cen_dec), frame='icrs', unit=(u.hourangle, u.deg))
-if pc:
-    print('# {0:>5s} {1:>8s} {2:>8s} {3:>8s} {4:>8s}'.format('ID', 'Xoffset', 'Yoffset', 'RA', 'Dec'))
-    print('# {0:>5s} {1:>8s} {2:>8s} {3:>8s} {4:>8s}'.format('', '(deg)', '(deg)', '(deg)', '(deg)'))
+if sc:
+    f = open(sc, 'w')
+    f.write('# {0:>5s} {1:>8s} {2:>8s} {3:>8s} {4:>8s}\n'.format('ID', 'Xoffset', 'Yoffset', 'RA', 'Dec'))
+    f.write('# {0:>5s} {1:>8s} {2:>8s} {3:>8s} {4:>8s}\n'.format('', '(deg)', '(deg)', '(deg)', '(deg)'))
 Np=0
 radecs = []
 for pp in points:
     [xx, yy] = pp
-    field=field+beam(x-xx, y-yy, bw)**2
     radec = mos_cen.spherical_offsets_by(xx*u.deg, yy*u.deg)
-    if pc: print('  {0:5d} {1:8.3f} {2:8.3f} {3:8.3f} {4:8.3f}'.format(Np, xx, yy, radec.ra.value, radec.dec.value))
-    radecs.append([Np,radec])
+    if Np in skip:
+        if sc: f.write('#  {0:5d} {1:8.3f} {2:8.3f} {3:8.3f} {4:8.3f}\n'.format(Np, xx, yy, radec.ra.value, radec.dec.value))
+    else:
+        field=field+beam(x-xx, y-yy, bw)**2
+        radecs.append([Np,radec])
+        if sc: f.write('  {0:5d} {1:8.3f} {2:8.3f} {3:8.3f} {4:8.3f}\n'.format(Np, xx, yy, radec.ra.value, radec.dec.value))
     Np+=1
+if sc:
+    f.close()
 
 
 # Convert sky image into noise pattern
@@ -166,7 +179,7 @@ fmin = field.min()
 
 # Print results
 print('# Result:')
-print('#    {0:4d} pointings, min noise = {1:.2f} x single-pointing noise'.format(Np,fmin))
+print('#    {0:4d} pointings, min noise = {1:.2f} x single-pointing noise'.format(len(radecs),fmin))
 print('#                    max effective integration = {0:.2f} x single-pointing integration'.format(1./fmin**2))
 print('#    mosaic area = {0:.1f} deg^2 below {1:.2f}x min noise'.format(float((field<1.1*fmin).sum())*pix**2,1.1))
 print('#                  {0:.1f} deg^2 below {1:.2f}x min noise'.format(float((field<np.sqrt(2)*fmin).sum())*pix**2,np.sqrt(2)))

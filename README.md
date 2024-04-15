@@ -4,12 +4,14 @@ Interferometric mosaic planning tool.
 
 It distributes Gaussian primary beams of a given FWHM (`-bw`) on a hexagonal mosaic grid of a given size (`-ms`) and spacing (`-gs`), and returns useful info on the resulting mosaic.
 
-Users can specify the centra RA (`-ra`) and Dec (`-dec`), a rotation angle about the centre (`-rot`).
+Users can specify the centra RA (`-ra`) and Dec (`-dec`), and a rotation angle about the centre (`-rot`).
 
-The RA,Dec of the pointings can be printed to screen.
+The RA,Dec of the pointings can be saved to an ASCII file (`-sc`).
+
+It is possible to modify a mosaic set up exclude some pointgs (`-skip`).
 
 ```
-usage: hexmos.py [-h] [-ms MOS_SIZE] [-bw BEAM_WIDTH] [-gs GRID_SPACING] [-ra RIGHT_ASCENSION] [-dec DECLINATION] [-rot ROTATE] [-pc]
+usage: hexmos.py [-h] [-ms MOS_SIZE] [-bw BEAM_WIDTH] [-gs GRID_SPACING] [-ra RIGHT_ASCENSION] [-dec DECLINATION] [-rot ROTATE] [-sc SAVE_COORDS] [-skip SKIP_POINTINGS [SKIP_POINTINGS ...]]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -25,5 +27,8 @@ optional arguments:
                         Declination of the mosaic centre in dd:mm:ss.s. Default is 30:0:0.
   -rot ROTATE, --rotate ROTATE
                         Rotate pointing pattern about the mosaic centre by this angle (north through east). Default is 0 deg.
-  -pc, --print-coords   Print coordinates of the pointings. Default is false.
+  -sc SAVE_COORDS, --save-coords SAVE_COORDS
+                        Save the coordinates of the pointings to an ASCII file. Give the file name here. The default is to not save the coordinates to a file.
+  -skip SKIP_POINTINGS [SKIP_POINTINGS ...], --skip-pointings SKIP_POINTINGS [SKIP_POINTINGS ...]
+                        Space separated list of pointings ID to be skipped when building the mosaic. Default is to include all poitings.
 ```
