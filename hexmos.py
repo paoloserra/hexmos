@@ -36,6 +36,18 @@ import astropy.wcs as wcs
 from astropy.io import fits
 
 
+# Fix ArgumentParser bug with negative arguments
+if '-dec=' in sys.argv[1:]:
+    decsign = ''
+elif '-dec' in sys.argv[1:]:
+    decvalind = sys.argv.index('-dec')+1
+    if sys.argv[decvalind][0] == '-':
+        sys.argv[decvalind] = sys.argv[decvalind][1:]
+        decsign = '-'
+    else: decsign = ''
+else: decsign = ''
+
+
 # Read settings from command line
 args = create_parser().parse_args([a for a in sys.argv[1:]])
 ms = list(map(float,args.mos_size.split(',')))
@@ -44,7 +56,7 @@ gs = args.grid_spacing
 pc = args.print_coords
 rot = args.rotate
 mos_cen_ra = args.right_ascension
-mos_cen_dec = args.declination
+mos_cen_dec = decsign+args.declination
 
 
 # Print settings
