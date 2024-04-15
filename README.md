@@ -4,7 +4,7 @@ Interferometric mosaic planning tool.
 
 It distributes Gaussian primary beams of a given FWHM (`-bw`) on a hexagonal mosaic grid of a given size (`-ms`) and spacing (`-gs`), and returns useful info on the resulting mosaic.
 
-Users can specify the centra RA (`-ra`) and Dec (`-dec`), and a rotation angle about the centre (`-rot`).
+Users can specify the central RA (`-ra`) and Dec (`-dec`), and a rotation angle about the centre (`-rot`).
 
 The RA,Dec of the pointings can be saved to an ASCII file (`-sc`).
 
