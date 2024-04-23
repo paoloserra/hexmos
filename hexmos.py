@@ -17,12 +17,18 @@ def create_parser():
     p.add_argument("-rot", "--rotate", type=float, default=0.0,
                    help="Rotate pointing pattern about the mosaic centre by this angle (north through east)."
                    " Default is 0 deg.")
+    p.add_argument("-sp", "--show-pointings", action="store_true",)
     p.add_argument("-sc", "--save-coords", type=str,
                    help="Save the coordinates of the pointings to an ASCII file. Give the file name here."
                    " The default is to not save the coordinates to a file.")
     p.add_argument("-skip", "--skip-pointings", type=int, nargs='+', required = False,
                    help="Space separated list of pointings ID to be skipped when building the mosaic."
                    " Default is to include all poitings.")
+    p.add_argument("-aup", "--add-user-plot", action="store_true",
+                   help="Include additional elements in the plot through the python module called"
+                   " add_user_plot.py located in the CWD. The module must define the single function"
+                   " add_to_plot(axis,wcs), where 'axis' is a matplotlib.axes.Axes object and"
+                   " 'wcs' is a astropy.wcs.WCS object.")
     return p
 
 def beam(X,Y,FWHM):
@@ -36,7 +42,7 @@ from matplotlib import pyplot as plt
 import argparse,sys
 import astropy.units as u
 from astropy.coordinates import SkyCoord
-import astropy.wcs as wcs
+import astropy.wcs as WCS
 from astropy.io import fits
 
 
@@ -57,9 +63,12 @@ args = create_parser().parse_args([a for a in sys.argv[1:]])
 ms = list(map(float,args.mos_size.split(',')))
 bw = args.beam_width
 gs = args.grid_spacing
+sp = args.show_pointings
 sc = args.save_coords
 rot = args.rotate
 skip = args.skip_pointings
+aup = args.add_user_plot
+
 mos_cen_ra = args.right_ascension
 mos_cen_dec = decsign+args.declination
 if not skip:
@@ -81,7 +90,6 @@ print('#')
 
 # Hardcoded settings
 pix = bw/100 # pixel size of mosaic map
-show_point = True
 
 
 # Go!
@@ -89,7 +97,7 @@ show_point = True
 
 # Create the arrays with the X and Y coordinates
 rot *= -np.pi / 180
-array_size = 1.1*np.max((
+array_size = 1.2*np.max((
                 np.abs(np.cos(rot) * ms[0]) + np.abs(np.sin(rot) * ms[1]),
                 np.abs(np.sin(rot) * ms[0]) + np.abs(np.cos(rot) * ms[1])))
 x = np.atleast_2d(np.arange(-array_size/2, array_size/2+pix, pix))
@@ -186,8 +194,9 @@ print('#                  {0:.1f} deg^2 below {1:.2f}x min noise'.format(float((
 print('#                  {0:.1f} deg^2 below {1:.2f}x min noise'.format(float((field<2*fmin).sum())*pix**2,2))
 print('#')
 
+field[field > 100 * np.nanmin(field)] = np.nan
 
-# Create FITS file (optionally save)
+# Create FITS file for plotting and save it to disk
 hdu = fits.PrimaryHDU(field)
 hdu.header['naxis']   = 2
 hdu.header['naxis1']  = field.shape[1]
@@ -201,23 +210,26 @@ hdu.header['cdelt2']  = +pix
 hdu.header['ctype1']  = 'RA---TAN'
 hdu.header['ctype2']  = 'DEC--TAN'
 hdu.header['equinox'] = 2000
-# hdu.writeto('blahex.fits', overwrite=True)
+hdu.writeto('snake.fits', overwrite=True)
 
 
 # Initialise figure
 fig = plt.figure(figsize=(7,7))
 plt.subplots_adjust(left=0.1,bottom=0.1,right=0.98,top=0.98,wspace=0.,hspace=0.)
-ax = fig.add_subplot(111, aspect='equal', projection=wcs.WCS(hdu.header))
+ax = fig.add_subplot(111, aspect='equal', projection=WCS.WCS(hdu.header))
 
 
 # Add pointings and sensitivity contours to figure
-if show_point:
+if sp:
     for pp in radecs:
-        x,y = wcs.utils.skycoord_to_pixel(pp[1], wcs.WCS(hdu.header))
+        x,y = WCS.utils.skycoord_to_pixel(pp[1], WCS.WCS(hdu.header))
         ax.plot(x, y, marker='.', ms=0.5, color='0.5')
-        ax.text(x, y, pp[0], ha='center', va='center', fontsize=6)
-ax.contour(field, [1.1*fmin, np.sqrt(2)*fmin, 2*fmin], colors='k')
+        ax.text(x, y, pp[0], ha='center', va='center', fontsize=4, zorder=100)
+ax.contour(field, [1.1*fmin, np.sqrt(2)*fmin, 2*fmin], colors='0.5', linewidths=[0.5,], zorder=10)
 
+if aup:
+    import add_user_plot as aup
+    aup.add_to_plot(ax, WCS.WCS(hdu.header))
 
 # Finalise figure
 plt.xlabel('RA (J2000)')
